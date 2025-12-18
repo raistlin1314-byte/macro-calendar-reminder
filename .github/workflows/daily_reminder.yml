@@ -1,0 +1,46 @@
+name: Daily Macro Calendar Reminder
+
+on:
+  schedule:
+    # 每天北京时间上午9点运行 (UTC时间凌晨1点)
+    - cron: '0 1 * * *'
+  
+  # 允许手动触发，用于测试
+  workflow_dispatch:
+    inputs:
+      test_mode:
+        description: '是否运行测试模式 (发送测试通知)'
+        required: false
+        default: 'false'
+
+jobs:
+  send-reminder:
+    runs-on: ubuntu-latest
+    # 添加超时设置，避免长时间挂起
+    timeout-minutes: 5
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Run reminder script
+      env:
+        PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        TEST_MODE: ${{ github.event.inputs.test_mode || 'false' }}
+      run: python reminder.py
+      
+    - name: Report job status
+      if: always()
+      run: |
+        echo "提醒任务执行完成"
+        echo "查看日志了解详细情况"
