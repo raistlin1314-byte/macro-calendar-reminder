@@ -57,7 +57,7 @@ def send_pushplus_notification(events):
     today = datetime.date.today().strftime("%Y-%m-%d")
     title = f"【{len(events)}个】宏观事件提醒 - {today}"
     
-    # 构建HTML格式的消息内容（支持更好格式）
+    # 构建HTML格式的消息内容
     message = f"<h2>【宏观日历提醒】{today}</h2>"
     message += f"<p><strong>即将到来的重要事件：</strong></p>"
     message += "<ul>"
@@ -69,14 +69,16 @@ def send_pushplus_notification(events):
     message += "</ul>"
     message += "<p><small>数据来源：2026年年度宏观日历<br>提醒规则：事件开始前2天和1天提醒</small></p>"
     
-    # 发送请求到PushPlus
+    # 发送请求到PushPlus - 群组推送版本
     url = "https://www.pushplus.plus/send"
     payload = {
         "token": pushplus_token,
         "title": title,
         "content": message,
         "template": "html",
-        "topic": ""  # 如果有群组推送，可以设置topic
+        "topic": "macro_reminder_group",  # 修改为您的群组编码
+        "channel": "wechat",  # 指定使用微信渠道
+        "sendType": 1  # 1=群发, 2=单发（默认是1，但显式指定更安全）
     }
     
     headers = {
@@ -84,21 +86,21 @@ def send_pushplus_notification(events):
     }
     
     try:
-        logger.info(f"正在发送通知到PushPlus，事件数量: {len(events)}")
+        logger.info(f"正在发送群组通知到PushPlus，事件数量: {len(events)}")
         response = requests.post(url, json=payload, headers=headers, timeout=15)
         response_data = response.json()
         
-        logger.info(f"通知发送结果: {response.status_code}, {response.text}")
+        logger.info(f"群组通知发送结果: {response.status_code}, {response.text}")
         
         if response.status_code == 200 and response_data.get('code') == 200:
-            logger.info("通知发送成功")
+            logger.info("群组通知发送成功")
             return True
         else:
-            logger.error(f"通知发送失败，响应: {response_data}")
+            logger.error(f"群组通知发送失败，响应: {response_data}")
             return False
             
     except Exception as e:
-        logger.error(f"发送通知失败: {str(e)}")
+        logger.error(f"发送群组通知失败: {str(e)}")
         return False
 
 def test_notification():
