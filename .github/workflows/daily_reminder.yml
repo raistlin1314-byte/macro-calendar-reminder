@@ -1,4 +1,4 @@
-name: Daily Macro Calendar Reminder
+name: Daily Macro Calendar Reminder (Optimized Format)
 
 on:
   schedule:
@@ -11,7 +11,7 @@ on:
       test_mode:
         description: '是否运行测试模式 (发送测试通知)'
         required: false
-        default: 'false'
+        default: 'true'  # 默认开启测试模式，方便首次验证
 
 jobs:
   send-reminder:
@@ -22,7 +22,10 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      
+      with:
+        # 确保获取完整历史，便于调试
+        fetch-depth: 1
+    
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
@@ -32,15 +35,24 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        echo "✅ 依赖安装完成"
         
     - name: Run reminder script
       env:
         PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
-        TEST_MODE: ${{ github.event.inputs.test_mode || 'false' }}
-      run: python reminder.py
+        TEST_MODE: ${{ github.event.inputs.test_mode || 'true' }}  # 默认开启测试
+      run: |
+        echo "🚀 开始运行宏观日历提醒工具..."
+        python reminder.py
+        echo "✅ 脚本执行完成"
       
     - name: Report job status
       if: always()
       run: |
-        echo "提醒任务执行完成"
-        echo "查看日志了解详细情况"
+        echo "🔔 宏观日历提醒任务执行完成"
+        echo "📋 请检查GitHub Actions日志和微信通知"
+        echo ""
+        echo "💡 提示："
+        echo "   - 如果是首次运行，已发送测试通知"
+        echo "   - 正常运行时，仅在有即将发生的事件时发送通知"
+        echo "   - 每天自动执行时间：北京时间 09:00"
